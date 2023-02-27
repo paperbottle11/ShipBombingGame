@@ -13,7 +13,7 @@ public class ShipBombingGameUI{
         frame.setResizable(true);
 
         ShipBombingGameScene panel = new ShipBombingGameScene();
-        panel.setPreferredSize(new Dimension(1000, 1000));
+        panel.setPreferredSize(new Dimension(1200, 1000));
         panel.addMouseMotionListener(panel);
         panel.addMouseListener(panel);
         panel.addKeyListener(panel);
@@ -32,7 +32,7 @@ public class ShipBombingGameUI{
 
 class ShipBombingGameScene extends JPanel implements MouseInputListener, ActionListener, KeyListener {
     
-    ShipBombingGame game = new ShipBombingGame(7);
+    ShipBombingGame game = new ShipBombingGame(9);
     {
         game.gameState = game.CHOOSING_DIFFICULTY;
     }
@@ -63,45 +63,45 @@ class ShipBombingGameScene extends JPanel implements MouseInputListener, ActionL
     String currentTurn;
     String hitMessage = "";
 	
-    //Update
+    //Repaint Loop
 	public void actionPerformed(ActionEvent e) {
         repaint();
     }
     
     void drawMessages(Graphics2D g2){
-        g2.setFont(currentFont.deriveFont(25f));
+        g2.setFont(currentFont.deriveFont(20f));
         for(int i = 0; i < game.messages.size(); i++){
-            FontMetrics metrics = g2.getFontMetrics(g2.getFont());
-            int stringWidth = metrics.stringWidth(game.messages.get(i));
-            g2.drawString(game.messages.get(i), getWidth() / 2 - stringWidth / 2, game.shipBoardStartY - 70 + 50 * i);
+            g2.drawString(game.messages.get(i), game.shotBoardStartX + 20 + game.shipSquareSize * game.initialBoardSize, game.shotBoardStartY + 20 + 50 * i);
         }
         g2.setFont(currentFont);
     }
 
     void drawShipLists(Graphics2D g2){
         g2.setFont(currentFont.deriveFont(25f));
-        String displayString = "Enemy Ships:";
+        String displayString = "Enemy Ship (Size)";
         FontMetrics metrics = g2.getFontMetrics(g2.getFont());
         int stringWidth = metrics.stringWidth(displayString);
         g2.drawString(displayString, game.shotBoardStartX - 25 - stringWidth, game.shotBoardStartY + 20);
         for(int i = 0; i < game.maxShips; i++){
             displayString = game.SHIPS[i][0];
-            String isDestroyed = game.isDestroyed(game.getShip(game.enemyBoard, game.SHIPS[i][0]));
-            displayString += "[" + isDestroyed + "]";
+            Ship currentShip = game.getShip(game.enemyBoard, game.SHIPS[i][0]);
+            String isDestroyed = game.isDestroyed(currentShip);
+            displayString += String.format("[%s]   (%d)", isDestroyed, currentShip.size);
             stringWidth = metrics.stringWidth(displayString);
             if(isDestroyed.equals("X")) g2.setColor(Color.RED);
             else g2.setColor(Color.BLACK);
-            g2.drawString(displayString, game.shotBoardStartX - 25 - stringWidth, game.shotBoardStartY + 25 * (i + 1) + 20);
+            g2.drawString(displayString, game.shotBoardStartX - 30 - stringWidth, game.shotBoardStartY + 25 * (i + 1) + 20);
         }
         
-        displayString = "Player Ships:";
+        displayString = "Player Ship (Size)";
         stringWidth = metrics.stringWidth(displayString);
         g2.setColor(Color.BLACK);
-        g2.drawString(displayString, game.shipBoardStartX - 25 - stringWidth, game.shipBoardStartY + 20);
+        g2.drawString(displayString, game.shipBoardStartX - 30 - stringWidth, game.shipBoardStartY + 20);
         for(int i = 0; i < game.maxShips; i++){
             displayString = game.SHIPS[i][0];
-            String isDestroyed = game.isDestroyed(game.getShip(game.playerBoard, game.SHIPS[i][0]));
-            displayString += "[" + isDestroyed + "]";
+            Ship currentShip = game.getShip(game.playerBoard, game.SHIPS[i][0]);
+            String isDestroyed = game.isDestroyed(currentShip);
+            displayString += String.format("[%s]   (%d)", isDestroyed, currentShip.size);
             stringWidth = metrics.stringWidth(displayString);
             if(isDestroyed.equals("X")) g2.setColor(Color.RED);
             else g2.setColor(Color.BLACK);
@@ -109,7 +109,6 @@ class ShipBombingGameScene extends JPanel implements MouseInputListener, ActionL
         }
     }
     
-    //Update
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -127,7 +126,7 @@ class ShipBombingGameScene extends JPanel implements MouseInputListener, ActionL
             g2.fillRect(0, 0, getWidth(), getHeight());
 
             g2.setColor(Color.BLACK);
-            g2.setFont(game.shipFont);
+            g2.setFont(game.shipFont.deriveFont(35f));
             String displayString = "Welcome to Ship Bombing Game!";
             FontMetrics metrics = g2.getFontMetrics(g2.getFont());
             int stringWidth = metrics.stringWidth(displayString);
@@ -177,7 +176,7 @@ class ShipBombingGameScene extends JPanel implements MouseInputListener, ActionL
             game.drawPlacingShip(g2, mouseShipGridPosX, mouseShipGridPosY, placingShipSize, placingDirection);
 
             g2.setColor(Color.BLACK);
-            g2.setFont(game.shipFont);
+            g2.setFont(game.shipFont.deriveFont(35f));
             String displayString = "Press R or click Right Mouse to rotate ship";
             FontMetrics metrics = g2.getFontMetrics(g2.getFont());
             int stringWidth = metrics.stringWidth(displayString);
@@ -204,6 +203,7 @@ class ShipBombingGameScene extends JPanel implements MouseInputListener, ActionL
             } else {
                 currentTurn = "The enemy is aiming at us!";
             }
+            g2.setFont(currentFont.deriveFont(50f));
             FontMetrics metrics = g2.getFontMetrics(g2.getFont());
             int stringWidth = metrics.stringWidth(currentTurn);
             g2.drawString(currentTurn, getWidth() / 2 - stringWidth / 2, 50);
@@ -211,19 +211,19 @@ class ShipBombingGameScene extends JPanel implements MouseInputListener, ActionL
             drawMessages(g2);
             drawShipLists(g2);
 
-            String displayString = "Press L to forfeit the game";
-            stringWidth = metrics.stringWidth(displayString);
+            g2.setFont(currentFont.deriveFont(20f));
             g2.setColor(Color.BLACK);
-            g2.drawString(displayString, getWidth() - stringWidth + 125, getHeight() - 10);
+            g2.drawString("Press L to forfeit the game", 10, getHeight() - 10);
         } else if(game.gameState == game.GAME_WON){
             game.drawShips(g2);
             game.drawShotBoard(g2);
             drawShipLists(g2);
             
-            g2.setColor(new Color(128, 128, 128, 128));
+            g2.setColor(new Color(128, 128, 128, 200));
             g2.fillRect(0, 0, getWidth(), getHeight());
 
-            g2.setColor(Color.BLACK);
+            g2.setColor(Color.WHITE);
+            g2.setFont(currentFont.deriveFont(50f));
             String loseString = "You won!";
             FontMetrics metrics = g2.getFontMetrics(g2.getFont());
             int stringWidth = metrics.stringWidth(loseString);
@@ -242,10 +242,11 @@ class ShipBombingGameScene extends JPanel implements MouseInputListener, ActionL
             game.drawShotBoard(g2);
             drawShipLists(g2);
             
-            g2.setColor(new Color(128, 128, 128, 128));
+            g2.setColor(new Color(128, 128, 128, 200));
             g2.fillRect(0, 0, getWidth(), getHeight());
 
-            g2.setColor(Color.BLACK);
+            g2.setColor(Color.WHITE);
+            g2.setFont(currentFont.deriveFont(50f));
             String loseString = "You lost!";
             FontMetrics metrics = g2.getFontMetrics(g2.getFont());
             int stringWidth = metrics.stringWidth(loseString);
@@ -264,14 +265,14 @@ class ShipBombingGameScene extends JPanel implements MouseInputListener, ActionL
             g2.fillRect(0, 0, getWidth(), getHeight());
             
             g2.setColor(Color.BLACK);
-            g2.setFont(currentFont);
+            g2.setFont(currentFont.deriveFont(35f));
             String loseString = "Game Over";
             FontMetrics metrics = g2.getFontMetrics(g2.getFont());
             int stringWidth = metrics.stringWidth(loseString);
             int stringHeight = metrics.getHeight();
             g2.drawString(loseString, getWidth() / 2 - stringWidth / 2, getHeight() / 2 + stringHeight / 2);
 
-            loseString = "Click Anywhere to Restart";
+            loseString = "Press Space to Restart";
             stringWidth = metrics.stringWidth(loseString);
             g2.drawString(loseString, getWidth() / 2 - stringWidth / 2, getHeight() / 2 + stringHeight / 2 + 50);
         }
@@ -316,6 +317,11 @@ class ShipBombingGameScene extends JPanel implements MouseInputListener, ActionL
         }
         if(e.getKeyCode() == KeyEvent.VK_R && game.gameState == game.PLACING_SHIPS) placingDirection = 1 - placingDirection;
         if(e.getKeyCode() == KeyEvent.VK_L && game.gameState == game.PLAYING_GAME) game.gameState = game.GAME_LOST;
+        if(e.getKeyCode() == KeyEvent.VK_SPACE && game.gameState == game.GAME_OVER){
+            game.resetGame(game.CHOOSING_DIFFICULTY);
+            repaint();
+            placingShipSize = Integer.parseInt(game.SHIPS[0][1]);
+        }
     }
 
     public void keyTyped(KeyEvent e) {
@@ -327,38 +333,40 @@ class ShipBombingGameScene extends JPanel implements MouseInputListener, ActionL
 		mouseX = e.getX();
 		mouseY = e.getY();
 
-        if((mouseX - game.shipBoardStartX) / 50.0 < 0){
+        double squareSize = ((double) game.shipSquareSize);
+
+        if((mouseX - game.shipBoardStartX) / squareSize < 0){
             mouseShipGridPosX = -1;
             mouseShipGridPosY = -1;
-        } else if((mouseX - game.shipBoardStartX) / 50.0 >= 7){
+        } else if((mouseX - game.shipBoardStartX) / squareSize >= game.initialBoardSize){
             mouseShipGridPosX = -1;
             mouseShipGridPosY = -1;
-        } else if ((mouseY - game.shipBoardStartY) / 50.0 < 0){
+        } else if ((mouseY - game.shipBoardStartY) / squareSize < 0){
             mouseShipGridPosX = -1;
             mouseShipGridPosY = -1;
-        } else if((mouseY - game.shipBoardStartY) / 50.0 >= 7){
+        } else if((mouseY - game.shipBoardStartY) / squareSize >= game.initialBoardSize){
             mouseShipGridPosX = -1;
             mouseShipGridPosY = -1;
         } else {
-            mouseShipGridPosX = (int) ((mouseX - game.shipBoardStartX) / 50.0);
-            mouseShipGridPosY = (int) ((mouseY - game.shipBoardStartY) / 50.0);
+            mouseShipGridPosX = (int) ((mouseX - game.shipBoardStartX) / squareSize);
+            mouseShipGridPosY = (int) ((mouseY - game.shipBoardStartY) / squareSize);
         }
 
-        if((mouseX - game.shotBoardStartX) / 50.0 < 0){
+        if((mouseX - game.shotBoardStartX) / squareSize < 0){
             mouseShotGridPosX = -1;
             mouseShotGridPosY = -1;
-        } else if((mouseX - game.shotBoardStartX) / 50.0 >= 7){
+        } else if((mouseX - game.shotBoardStartX) / squareSize >= game.initialBoardSize){
             mouseShotGridPosX = -1;
             mouseShotGridPosY = -1;
-        } else if ((mouseY - game.shotBoardStartY) / 50.0 < 0){
+        } else if ((mouseY - game.shotBoardStartY) / squareSize < 0){
             mouseShotGridPosX = -1;
             mouseShotGridPosY = -1;
-        } else if((mouseY - game.shotBoardStartY) / 50.0 >= 7){
+        } else if((mouseY - game.shotBoardStartY) / squareSize >= game.initialBoardSize){
             mouseShotGridPosX = -1;
             mouseShotGridPosY = -1;
         } else {
-            mouseShotGridPosX = (int) ((mouseX - game.shotBoardStartX) / 50.0);
-            mouseShotGridPosY = (int) ((mouseY - game.shotBoardStartY) / 50.0);
+            mouseShotGridPosX = (int) ((mouseX - game.shotBoardStartX) / squareSize);
+            mouseShotGridPosY = (int) ((mouseY - game.shotBoardStartY) / squareSize);
         }
 
         if(game.gameState == game.CHOOSING_DIFFICULTY){
@@ -399,7 +407,7 @@ class ShipBombingGameScene extends JPanel implements MouseInputListener, ActionL
                 if(mouseShipGridPosX != -1 && mouseShipGridPosY != -1){
                     String[] currentShip = game.SHIPS[game.playerShips];
                     if(placingDirection == 0){
-                        if(mouseShipGridPosX + Integer.parseInt(currentShip[1]) <= 7){
+                        if(mouseShipGridPosX + Integer.parseInt(currentShip[1]) <= game.initialBoardSize){
                             for(int i = mouseShipGridPosX; i < mouseShipGridPosX + Integer.parseInt(currentShip[1]); i++){
                                 if(game.playerBoard[mouseShipGridPosY][i] != null){
                                     return;
@@ -410,7 +418,7 @@ class ShipBombingGameScene extends JPanel implements MouseInputListener, ActionL
                             placingShipSize = Integer.parseInt(game.SHIPS[game.playerShips][1]);
                         }
                     } else {
-                        if(mouseShipGridPosY + Integer.parseInt(currentShip[1]) <= 7){
+                        if(mouseShipGridPosY + Integer.parseInt(currentShip[1]) <= game.initialBoardSize){
                             for(int i = mouseShipGridPosY; i < mouseShipGridPosY + Integer.parseInt(currentShip[1]); i++){
                                 if(game.playerBoard[i][mouseShipGridPosX] != null){
                                     return;
@@ -491,12 +499,6 @@ class ShipBombingGameScene extends JPanel implements MouseInputListener, ActionL
                 });
                 timer.setRepeats(false);
                 timer.start();
-            }
-
-            if(game.gameState == game.GAME_OVER){
-                game.resetGame(game.CHOOSING_DIFFICULTY);
-                repaint();
-                placingShipSize = Integer.parseInt(game.SHIPS[0][1]);
             }
         }
         if(e.getButton() == 3){

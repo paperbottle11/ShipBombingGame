@@ -46,7 +46,7 @@ public class ShipBombingGame {
     private int autoPlayX = 0;
     private int autoPlayY = 0;
     
-    //AI Variables
+    //region AI Variables
     private boolean enemyLastShotHit = false;
     private int enemyLastShotX;
     private int enemyLastShotY;
@@ -60,15 +60,16 @@ public class ShipBombingGame {
     int shipBoardStartX;
     int shipBoardStartY;
 
-    int shotSquareSize = 35;
+    int shotSquareSize;
     int shotBoardStartX;
     int shotBoardStartY;
     int shotSquareOffset;
 
     Font shipFont;
-    float shipFontSize = shipSquareSize * 0.70f;
-    int shipTextOffsetX = shipSquareSize / 3;
+    float shipFontSize;
+    int shipTextOffsetX;
     int shipTextOffsetY;
+    int lineWidth;
 
     ArrayList<String> messages = new ArrayList<String>();
     //endregion
@@ -95,9 +96,18 @@ public class ShipBombingGame {
             }
         }
         
-        shotSquareOffset = Math.round((shipSquareSize - shotSquareSize) / 2f);
         
-        shipTextOffsetY = Math.round(shipFontSize) + 2;
+        
+        if(initialBoardSize > 8) {
+            int sizeDiff = initialBoardSize - 8;
+            shipSquareSize = 425 / initialBoardSize;
+            shipFontSize = shipSquareSize * (0.70f - sizeDiff * 0.02f);
+            lineWidth = Math.round(5 - sizeDiff * 0.2f);
+        } else {
+            shipSquareSize = 50;
+            shipFontSize = shipSquareSize * 0.70f;
+            lineWidth = 5;
+        }
         
         try {
             shipFont = Font.createFont(Font.TRUETYPE_FONT, new File("ShareTechMono-Regular.ttf")).deriveFont(shipFontSize);
@@ -108,6 +118,15 @@ public class ShipBombingGame {
             System.out.println("Error loading font");
             shipFont = new Font("Arial", Font.PLAIN, Math.round(shipFontSize));
         }
+
+        FontMetrics metrics = new FontMetrics(shipFont) {};
+        int fontHeight = metrics.getHeight();
+        shotSquareSize = Math.round(0.7f * shipSquareSize);
+        shotSquareOffset = Math.round((shipSquareSize - shotSquareSize) / 2f);
+        shipTextOffsetX = fontHeight / 2;
+        shipTextOffsetY = shipSquareSize - fontHeight / 2;
+        
+        
     }
 
     //region Private Game Methods
@@ -207,26 +226,10 @@ public class ShipBombingGame {
         return out;
     }
 
-    public void placeShip(Ship[][] board, String id, int x, int y, int direction, int size){
-        if(direction == 0){
-            Ship ship = new Ship(id, x, y, direction, size);
-            for(int i = 0; i < size; i++){
-                board[y][x + i] = ship;
-            }
-        } else {
-            Ship ship = new Ship(id, x, y, direction, size);
-            for(int i = 0; i < size; i++){
-                board[y + i][x] = ship;
-            }
-        }
-    }
-
     private Ship getShip(Ship[][] board, int x, int y){
         if(board[y][x] == null) return null;
         else return board[y][x];
     }
-
-    
     
     private void placePhase(String name, int size){
         while(true){
@@ -640,6 +643,20 @@ public class ShipBombingGame {
         }
     }
     
+    public void placeShip(Ship[][] board, String id, int x, int y, int direction, int size){
+        if(direction == 0){
+            Ship ship = new Ship(id, x, y, direction, size);
+            for(int i = 0; i < size; i++){
+                board[y][x + i] = ship;
+            }
+        } else {
+            Ship ship = new Ship(id, x, y, direction, size);
+            for(int i = 0; i < size; i++){
+                board[y + i][x] = ship;
+            }
+        }
+    }
+    
     public void bombPlayer(int difficulty){
         Random r = new Random();
         
@@ -910,7 +927,7 @@ public class ShipBombingGame {
         }
 
         g2.setColor(Color.BLACK);
-        g2.setStroke(new BasicStroke(5));
+        g2.setStroke(new BasicStroke(lineWidth));
         for(int i = 0; i < playerBoard.length + 1; i++){
             g2.drawLine(shipBoardStartX + i * shipSquareSize, shipBoardStartY, shipBoardStartX + i * shipSquareSize, shipBoardStartY + boardHeight);
             g2.drawLine(shipBoardStartX, shipBoardStartY + i * shipSquareSize, shipBoardStartX + boardWidth, shipBoardStartY + i * shipSquareSize);
@@ -921,9 +938,9 @@ public class ShipBombingGame {
         if(mouseGridPosX != -1 && mouseGridPosY != -1){
             if(placingDirection == 0){
                 int newPlacingShipSize = 0;
-                if(mouseGridPosX + placingShipSize > 7){
+                if(mouseGridPosX + placingShipSize > initialBoardSize){
                     g2.setColor(new Color(255, 0, 0, 100));
-                    newPlacingShipSize = shipSquareSize * (7 - mouseGridPosX);
+                    newPlacingShipSize = shipSquareSize * (initialBoardSize - mouseGridPosX);
                 } else {
                     g2.setColor(new Color(0, 0, 0, 100));
                     newPlacingShipSize = shipSquareSize * placingShipSize;
@@ -932,9 +949,9 @@ public class ShipBombingGame {
             }
             else if(placingDirection == 1){
                 int newPlacingShipSize = 0;
-                if(mouseGridPosY + placingShipSize > 7){
+                if(mouseGridPosY + placingShipSize > initialBoardSize){
                     g2.setColor(new Color(255, 0, 0, 100));
-                    newPlacingShipSize = shipSquareSize * (7 - mouseGridPosY);
+                    newPlacingShipSize = shipSquareSize * (initialBoardSize - mouseGridPosY);
                 } else {
                     g2.setColor(new Color(0, 0, 0, 100));
                     newPlacingShipSize = shipSquareSize * placingShipSize;
@@ -972,7 +989,7 @@ public class ShipBombingGame {
         }
 
         g2.setColor(Color.BLACK);
-        g2.setStroke(new BasicStroke(5));
+        g2.setStroke(new BasicStroke(lineWidth));
         for(int i = 0; i < shots.length + 1; i++){
             g2.drawLine(shotBoardStartX + i * shipSquareSize, shotBoardStartY, shotBoardStartX + i * shipSquareSize, shotBoardStartY + boardHeight);
             g2.drawLine(shotBoardStartX, shotBoardStartY + i * shipSquareSize, shotBoardStartX + boardWidth, shotBoardStartY + i * shipSquareSize);
@@ -980,33 +997,33 @@ public class ShipBombingGame {
     }
     //endregion
 
-    // public static void main(String[] args){
-    //     while(true){
-    //         ShipBombingGame game = new ShipBombingGame(7);
-    //         game.startGame(null);
-    //         while(game.gameState == game.PLAYING_GAME){
-    //             game.takeTurn();
-    //             if(game.gameState == game.GAME_WON){
-    //                 System.out.println(game.CLEARSCREEN);
-    //                 System.out.println(game);
-    //                 System.out.println("You won!");
-    //                 game.gameState = game.GAME_OVER;
-    //             } else if(game.gameState == game.GAME_LOST){
-    //                 System.out.println(game.CLEARSCREEN);
-    //                 System.out.println(game);
-    //                 System.out.println("You lost!");
-    //                 game.gameState = game.GAME_OVER;
-    //             }
-    //         }
+    public static void main(String[] args){
+        while(true){
+            ShipBombingGame game = new ShipBombingGame(10);
+            game.startGame(null);
+            while(game.gameState == game.PLAYING_GAME){
+                game.takeTurn();
+                if(game.gameState == game.GAME_WON){
+                    System.out.println(game.CLEARSCREEN);
+                    System.out.println(game);
+                    System.out.println("You won!");
+                    game.gameState = game.GAME_OVER;
+                } else if(game.gameState == game.GAME_LOST){
+                    System.out.println(game.CLEARSCREEN);
+                    System.out.println(game);
+                    System.out.println("You lost!");
+                    game.gameState = game.GAME_OVER;
+                }
+            }
 
-    //         if(game.gameState == game.GAME_OVER){
-    //             String input = "";
-    //             while(input.isEmpty()){
-    //                 System.out.println("Play again? (y/n)");
-    //                 input = System.console().readLine().toLowerCase();
-    //             }
-    //             if(input.charAt(0) == 'n') break;
-    //         }
-    //     }
-    // }
+            if(game.gameState == game.GAME_OVER){
+                String input = "";
+                while(input.isEmpty()){
+                    System.out.println("Play again? (y/n)");
+                    input = System.console().readLine().toLowerCase();
+                }
+                if(input.charAt(0) == 'n') break;
+            }
+        }
+    }
 }
